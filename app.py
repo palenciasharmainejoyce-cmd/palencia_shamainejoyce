@@ -18,7 +18,6 @@ def get_student():
         "section": "B"
     })
 
-
 @app.route('/hello')
 def say_hello():
     name = request.args.get('name', 'Student')
@@ -27,6 +26,21 @@ def say_hello():
         "message": f"Hello, {name}!"
     })
 
+@app.route('/courses')
+def get_courses():
+    return jsonify({
+                "code": "IT3120",
+                "name": "System Integration",
+                "units": 3
+    })
+
+@app.route('/sharmaine')
+def say_sharmaine():
+    name = request.args.get('name', 'Student')
+
+    return jsonify({
+        "message": f"Gwapa si, {name}!"
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
