@@ -91,6 +91,13 @@
         <div id="coursesResult"></div>
     </div>
 
+    <!-- Database Students Section (Step 8 Added) -->
+    <div class="card">
+        <h2>Students from Database</h2>
+        <button onclick="loadStudents()">Load Students</button>
+        <div id="studentList"></div>
+    </div>
+
     <script>
         function loadStudent() {
             fetch('/student')
@@ -138,6 +145,30 @@
                 .catch(error => {
                     document.getElementById('coursesResult').innerHTML =
                         '<p style="color: red;">Unable to retrieve course data.</p>';
+                });
+        }
+
+        function loadStudents() {
+            fetch('/students')
+                .then(response => response.json())
+                .then(data => {
+                    let output = '<div class="result-box">';
+                    data.forEach(student => {
+                        output +=
+                            '<p>' +
+                            '<b>' + student.student_id + '</b> - ' +
+                            student.name + ' | ' +
+                            student.program + ' | Year ' +
+                            student.year + ' | Section ' +
+                            student.section +
+                            '</p>';
+                    });
+                    output += '</div>';
+                    document.getElementById('studentList').innerHTML = output;
+                })
+                .catch(error => {
+                    document.getElementById('studentList').innerHTML =
+                        '<p style="color: red;">Unable to retrieve student records.</p>';
                 });
         }
     </script>
