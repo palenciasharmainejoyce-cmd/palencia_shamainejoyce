@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student API Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333333;
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #34495e;
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        input {
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 60%;
+            margin-right: 8px;
+            font-size: 0.95rem;
+        }
+
+        .result-box {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student API Interface</h1>
+
+    <!-- Student Information Section -->
+    <div class="card">
+        <h2>Student Information</h2>
+        <button onclick="loadStudent()">Load Student Information</button>
+        <div id="result"></div>
+    </div>
+
+    <!-- Greeting API Section -->
+    <div class="card">
+        <h2>Greeting API</h2>
+        <input type="text" id="nameInput" placeholder="Enter your first name">
+        <button onclick="sayHello()">Say Hello</button>
+        <p id="greeting" style="font-weight: bold; margin-top: 12px; color: #2c3e50;"></p>
+    </div>
+
+    <!-- Course Information Section -->
+    <div class="card">
+        <h2>Course Information</h2>
+        <button onclick="loadCourses()">Load Course Information</button>
+        <div id="coursesResult"></div>
+    </div>
+
+    <script>
+        function loadStudent() {
+            fetch('/student')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('result').innerHTML =
+                        '<div class="result-box">' +
+                        '<p><b>Student ID:</b> ' + data.student_id + '</p>' +
+                        '<p><b>Name:</b> ' + data.name + '</p>' +
+                        '<p><b>Program:</b> ' + data.program + '</p>' +
+                        '<p><b>Year:</b> ' + data.year + '</p>' +
+                        '<p><b>Section:</b> ' + data.section + '</p>' +
+                        '</div>';
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML =
+                        '<p style="color: red;">Unable to retrieve data.</p>';
+                });
+        }
+
+        function sayHello() {
+            const name = document.getElementById('nameInput').value;
+
+            fetch('/hello?name=' + encodeURIComponent(name))
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('greeting').innerText = data.message;
+                })
+                .catch(error => {
+                    document.getElementById('greeting').innerText = 'Unable to retrieve greeting.';
+                });
+        }
+
+        function loadCourses() {
+            fetch('/courses')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('coursesResult').innerHTML =
+                        '<div class="result-box">' +
+                        '<p><b>Course Code:</b> ' + data.code + '</p>' +
+                        '<p><b>Course Name:</b> ' + data.name + '</p>' +
+                        '<p><b>Units:</b> ' + data.units + '</p>' +
+                        '</div>';
+                })
+                .catch(error => {
+                    document.getElementById('coursesResult').innerHTML =
+                        '<p style="color: red;">Unable to retrieve course data.</p>';
+                });
+        }
+    </script>
+</body>
+</html>
