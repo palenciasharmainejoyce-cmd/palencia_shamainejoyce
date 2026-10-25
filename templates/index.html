@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student API Interface</title>
+    <title>Student API Interface - Lab 9 Integration</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
             color: #333333;
-            max-width: 650px;
+            max-width: 750px;
             margin: 40px auto;
             padding: 20px;
         }
@@ -92,10 +92,22 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        .badge {
+            background-color: #e0e0e0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .badge-local { background-color: #d1e7dd; color: #0f5132; }
+        .badge-import { background-color: #cfe2ff; color: #084298; }
+        .badge-external { background-color: #f8d7da; color: #842029; }
     </style>
 </head>
 <body>
-    <h1>Student API Interface</h1>
+    <h1>System Integration Dashboard (Lab 9)</h1>
 
     <!-- Student Information Section -->
     <div class="card">
@@ -148,7 +160,7 @@
         </form>
     </div>
 
-    <!-- Database Students Section (My Records with Search & View Details) -->
+    <!-- Database Students Section (My Records with Search & Source Badges) -->
     <div class="card">
         <h2>My Records (Database)</h2>
         <div class="inline-group" style="margin-bottom: 10px;">
@@ -170,14 +182,12 @@
         <div id="sectionResult"></div>
     </div>
 
-    <!-- Classmate's Records Section (With View Details) -->
+    <!-- Partner Records Section (Lab 9 Step 3 & 4: Retrieve & Save to My Database) -->
     <div class="card">
-        <h2>Classmate's Records</h2>
-        <div class="inline-group">
-            <input type="text" id="classmateApiInput" placeholder="Enter Classmate Render URL">
-            <button onclick="loadClassmateStudents()" class="btn-warning">Load Classmate</button>
-        </div>
-        <div id="classmateResult"></div>
+        <h2>Partner Records (Classmate API)</h2>
+        <button onclick="loadPartnerRecords()" class="btn-warning">Retrieve Partner Records</button>
+        <div id="partnerResult"></div>
+        <div id="partnerDetails" style="margin-top: 10px;"></div>
     </div>
 
     <script>
@@ -229,7 +239,7 @@
                 });
         }
 
-        // READ My Students (with View Details, Edit, and Delete buttons)
+        // READ My Students (with Source Badges, View Details, Edit, and Delete buttons)
         function loadStudents() {
             document.getElementById('searchInput').value = '';
             fetch('/api/students')
@@ -260,20 +270,26 @@
                 });
         }
 
-        // Helper to display student list with View Details button
+        // Helper to display student list with Source Badges and Action buttons
         function displayStudentList(data) {
             let output = '<div class="result-box">';
             if (data.length === 0) {
                 output += '<p>No student records found.</p>';
             } else {
                 data.forEach(student => {
+                    let badgeClass = 'badge-local';
+                    let src = student.source || 'Local';
+                    if (src === 'Classmate API') badgeClass = 'badge-import';
+                    else if (src === 'Partner API' || src === 'External API') badgeClass = 'badge-external';
+
                     output += `
                         <div class="student-item">
                             <div>
                                 <b>${student.student_id}</b> - ${student.name}
+                                <span class="badge ${badgeClass}">${src}</span>
                             </div>
                             <div>
-                                <button class="btn-success" onclick='showOwnStudentDetails(${JSON.stringify(student)})'>View Details</button>
+                                <button class="btn-success" onclick='showOwnStudentDetails(${JSON.stringify(student)})'>View</button>
                                 <button class="btn-warning" onclick="editStudent(${student.id}, '${student.student_id}', '${student.name}', '${student.program}', ${student.year}, '${student.section}')">Edit</button>
                                 <button class="btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
                             </div>
@@ -285,16 +301,17 @@
             document.getElementById('studentList').innerHTML = output;
         }
 
-        // Show Complete Details for Own Record
+        // Show Complete Details for Own/Imported Record
         function showOwnStudentDetails(student) {
             const detailsHtml = `
                 <div class="result-box" style="background-color: #e8f5e9; border-left: 4px solid #2ecc71;">
-                    <h3>My Student Complete Details</h3>
+                    <h3>Student Complete Details</h3>
                     <p><b>Student ID:</b> ${student.student_id || 'N/A'}</p>
                     <p><b>Full Name:</b> ${student.name || 'N/A'}</p>
                     <p><b>Program:</b> ${student.program || 'N/A'}</p>
                     <p><b>Year Level:</b> ${student.year || 'N/A'}</p>
                     <p><b>Section:</b> ${student.section || 'N/A'}</p>
+                    <p><b>Source:</b> ${student.source || 'Local'}</p>
                 </div>
             `;
             document.getElementById('ownStudentDetails').innerHTML = detailsHtml;
@@ -309,7 +326,8 @@
                 name: document.getElementById('crudName').value,
                 program: document.getElementById('crudProgram').value,
                 year: parseInt(document.getElementById('crudYear').value),
-                section: document.getElementById('crudSection').value
+                section: document.getElementById('crudSection').value,
+                source: 'Local'
             };
 
             const method = dbId ? 'PUT' : 'POST';
@@ -397,17 +415,9 @@
                 });
         }
 
-        // Load Classmate's Records with View Details (Using Python Proxy to Bypass CORS)
-        function loadClassmateStudents() {
-            const classmateUrl = document.getElementById('classmateApiInput').value.trim();
-            if (!classmateUrl) {
-                alert("Please enter your classmate's Render API URL.");
-                return;
-            }
-
-            const targetApi = classmateUrl.endsWith('/api/students') ? classmateUrl : classmateUrl.replace(/\/$/, '') + '/api/students';
-
-            fetch('/proxy-classmate?url=' + encodeURIComponent(targetApi))
+        // Lab 9 Step 4: Load Partner Records via Flask /partner-records endpoint
+        function loadPartnerRecords() {
+            fetch('/partner-records')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -417,35 +427,36 @@
                 .then(data => {
                     let output = '<div class="result-box" style="border-left-color: #f39c12;">';
                     if (!Array.isArray(data) || data.length === 0) {
-                        output += '<p>No records found from classmate API.</p>';
+                        output += '<p>No records found from partner API.</p>';
                     } else {
-                        output += '<p><b>Select a student to view complete details:</b></p>';
+                        output += '<p><b>Partner Students (Select to View or Save):</b></p>';
                         data.forEach(student => {
                             output += `
                                 <div class="student-item" style="margin-bottom: 8px;">
                                     <span><b>${student.student_id || ''}</b> - ${student.name || ''}</span>
-                                    <button class="btn-warning" onclick='showRemoteStudentDetails(${JSON.stringify(student)})'>View Details</button>
+                                    <div>
+                                        <button class="btn-secondary" onclick='showPartnerStudentDetails(${JSON.stringify(student)})'>View</button>
+                                        <button class="btn-warning" onclick='savePartnerRecord(${JSON.stringify(student)})'>Save to My Database</button>
+                                    </div>
                                 </div>
                             `;
                         });
                     }
                     output += '</div>';
-                    output += '<div id="remoteStudentDetails" style="margin-top: 10px;"></div>';
-                    
-                    document.getElementById('classmateResult').innerHTML = output;
+                    document.getElementById('partnerResult').innerHTML = output;
                 })
                 .catch(error => {
                     console.error(error);
-                    document.getElementById('classmateResult').innerHTML =
-                        '<p style="color: red;">Unable to retrieve classmate records. Check URL or CORS/Render status.</p>';
+                    document.getElementById('partnerResult').innerHTML =
+                        '<p style="color: red;">Unable to retrieve partner records. Check backend route or partner URL.</p>';
                 });
         }
 
-        // Function para ipakita ang complete details ng napiling remote record
-        function showRemoteStudentDetails(student) {
+        // Show Partner Student Details before saving
+        function showPartnerStudentDetails(student) {
             const detailsHtml = `
                 <div class="result-box" style="background-color: #fff8e1; border-left: 4px solid #f39c12;">
-                    <h3>Remote Student Complete Details</h3>
+                    <h3>Partner Record Details (Before Saving)</h3>
                     <p><b>Student ID:</b> ${student.student_id || 'N/A'}</p>
                     <p><b>Full Name:</b> ${student.name || 'N/A'}</p>
                     <p><b>Program:</b> ${student.program || 'N/A'}</p>
@@ -453,7 +464,25 @@
                     <p><b>Section:</b> ${student.section || 'N/A'}</p>
                 </div>
             `;
-            document.getElementById('remoteStudentDetails').innerHTML = detailsHtml;
+            document.getElementById('partnerDetails').innerHTML = detailsHtml;
+        }
+
+        // Lab 9 Step 6: Save Partner Record to My Database via POST /import-student
+        function savePartnerRecord(student) {
+            fetch('/import-student', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(student)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || 'Remote record saved successfully!');
+                loadStudents(); // Refresh My Records para makita ang bagong imported record na may Classmate API badge
+            })
+            .catch(error => {
+                alert('Error saving remote record.');
+                console.error(error);
+            });
         }
     </script>
 </body>

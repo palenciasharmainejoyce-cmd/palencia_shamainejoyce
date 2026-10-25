@@ -70,7 +70,7 @@ def get_students_by_section(section_name):
 
 
 # ==========================================
-# --- LABORATORY ACTIVITY 8: CRUD ENDPOINTS ---
+# --- CRUD & API ENDPOINTS (Lab 8 & 9) ---
 # ==========================================
 
 @app.route('/api/students', methods=['GET'])
@@ -83,13 +83,15 @@ def api_students():
 @app.route('/api/students', methods=['POST'])
 def add_student():
     data = request.get_json()
+    # Lab 9 Step 8: Handle source for external/partner records
+    source = data.get('source', 'External API')
     conn = get_db_connection()
     cursor = conn.execute(
         """INSERT INTO students 
-        (student_id, name, program, year, section) 
-        VALUES (?, ?, ?, ?, ?)""",
+        (student_id, name, program, year, section, source) 
+        VALUES (?, ?, ?, ?, ?, ?)""",
         (data['student_id'], data['name'], data['program'], 
-         data['year'], data['section'])
+         data['year'], data['section'], source)
     )
     conn.commit()
     new_id = cursor.lastrowid
@@ -128,6 +130,36 @@ def delete_student(id):
     conn.commit()
     conn.close()
     return jsonify({"message": "Student deleted"})
+
+
+# ==========================================
+# --- LABORATORY ACTIVITY 9 INTEGRATION ---
+# ==========================================
+
+@app.route('/partner-records')
+def partner_records():
+    partner_url = "https://act-8-miranda-2.onrender.com/api/students"
+    try:
+        response = requests.get(partner_url, timeout=15)
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.RequestException:
+        return jsonify({"error": "Unable to retrieve partner data"}), 502
+
+@app.route('/import-student', methods=['POST'])
+def import_student():
+    data = request.get_json()
+    conn = get_db_connection()
+    conn.execute(
+        """INSERT INTO students
+        (student_id, name, program, year, section, source)
+        VALUES (?, ?, ?, ?, ?, ?)""",
+        (data['student_id'], data['name'], data['program'],
+         data['year'], data['section'], 'Classmate API')
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Remote record saved"}), 201
 
 
 # ==========================================
