@@ -353,7 +353,7 @@
                 });
         }
 
-        // Load Classmate's Records (Using /api/students endpoint)
+        // Load Classmate's Records (Using Python Proxy to Bypass CORS)
         function loadClassmateStudents() {
             const classmateUrl = document.getElementById('classmateApiInput').value.trim();
             if (!classmateUrl) {
@@ -363,11 +363,17 @@
 
             const targetApi = classmateUrl.endsWith('/api/students') ? classmateUrl : classmateUrl.replace(/\/$/, '') + '/api/students';
 
-            fetch(targetApi)
-                .then(response => response.json())
+            // Dito dadaan sa proxy para hindi ma-block ng CORS
+            fetch('/proxy-classmate?url=' + encodeURIComponent(targetApi))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     let output = '<div class="result-box" style="border-left-color: #f39c12;">';
-                    if (data.length === 0) {
+                    if (!Array.isArray(data) || data.length === 0) {
                         output += '<p>No records found from classmate API.</p>';
                     } else {
                         data.forEach(student => {
@@ -378,6 +384,7 @@
                     document.getElementById('classmateResult').innerHTML = output;
                 })
                 .catch(error => {
+                    console.error(error);
                     document.getElementById('classmateResult').innerHTML =
                         '<p style="color: red;">Unable to retrieve classmate records. Check URL or CORS/Render status.</p>';
                 });

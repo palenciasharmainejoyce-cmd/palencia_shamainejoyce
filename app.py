@@ -1,4 +1,5 @@
 import sqlite3
+import requests
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
@@ -127,6 +128,22 @@ def delete_student(id):
     conn.commit()
     conn.close()
     return jsonify({"message": "Student deleted"})
+
+
+# ==========================================
+# --- PROXY ENDPOINT FOR CLASSMATE API ---
+# ==========================================
+
+@app.route('/proxy-classmate')
+def proxy_classmate():
+    target_url = request.args.get('url')
+    if not target_url:
+        return jsonify({"error": "No URL provided"}), 400
+    try:
+        response = requests.get(target_url, timeout=15)
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
