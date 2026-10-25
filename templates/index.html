@@ -148,11 +148,16 @@
         </form>
     </div>
 
-    <!-- Database Students Section (My Records) -->
+    <!-- Database Students Section (My Records with Search & View Details) -->
     <div class="card">
         <h2>My Records (Database)</h2>
-        <button onclick="loadStudents()">Load My Students</button>
+        <div class="inline-group" style="margin-bottom: 10px;">
+            <input type="text" id="searchInput" placeholder="Search by name or ID...">
+            <button onclick="searchStudents()" class="btn-secondary">Search</button>
+        </div>
+        <button onclick="loadStudents()">Load All My Students</button>
         <div id="studentList"></div>
+        <div id="ownStudentDetails" style="margin-top: 10px;"></div>
     </div>
 
     <!-- Additional Task: Filter Students by Section -->
@@ -165,7 +170,7 @@
         <div id="sectionResult"></div>
     </div>
 
-    <!-- Classmate's Records Section (Step 8 & Additional Task) -->
+    <!-- Classmate's Records Section (With View Details) -->
     <div class="card">
         <h2>Classmate's Records</h2>
         <div class="inline-group">
@@ -224,36 +229,75 @@
                 });
         }
 
-        // READ My Students (with Edit and Delete buttons)
+        // READ My Students (with View Details, Edit, and Delete buttons)
         function loadStudents() {
+            document.getElementById('searchInput').value = '';
             fetch('/api/students')
                 .then(response => response.json())
                 .then(data => {
-                    let output = '<div class="result-box">';
-                    if (data.length === 0) {
-                        output += '<p>No student records found.</p>';
-                    } else {
-                        data.forEach(student => {
-                            output += `
-                                <div class="student-item">
-                                    <div>
-                                        <b>${student.student_id}</b> - ${student.name} | ${student.program} | Yr ${student.year} | Sec ${student.section}
-                                    </div>
-                                    <div>
-                                        <button class="btn-warning" onclick="editStudent(${student.id}, '${student.student_id}', '${student.name}', '${student.program}', ${student.year}, '${student.section}')">Edit</button>
-                                        <button class="btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    }
-                    output += '</div>';
-                    document.getElementById('studentList').innerHTML = output;
+                    displayStudentList(data);
                 })
                 .catch(error => {
                     document.getElementById('studentList').innerHTML =
                         '<p style="color: red;">Unable to retrieve student records.</p>';
                 });
+        }
+
+        // Search My Students Feature
+        function searchStudents() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            fetch('/api/students')
+                .then(response => response.json())
+                .then(data => {
+                    const filtered = data.filter(student => 
+                        (student.name && student.name.toLowerCase().includes(query)) || 
+                        (student.student_id && student.student_id.toLowerCase().includes(query))
+                    );
+                    displayStudentList(filtered);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        // Helper to display student list with View Details button
+        function displayStudentList(data) {
+            let output = '<div class="result-box">';
+            if (data.length === 0) {
+                output += '<p>No student records found.</p>';
+            } else {
+                data.forEach(student => {
+                    output += `
+                        <div class="student-item">
+                            <div>
+                                <b>${student.student_id}</b> - ${student.name}
+                            </div>
+                            <div>
+                                <button class="btn-success" onclick='showOwnStudentDetails(${JSON.stringify(student)})'>View Details</button>
+                                <button class="btn-warning" onclick="editStudent(${student.id}, '${student.student_id}', '${student.name}', '${student.program}', ${student.year}, '${student.section}')">Edit</button>
+                                <button class="btn-danger" onclick="deleteStudent(${student.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            output += '</div>';
+            document.getElementById('studentList').innerHTML = output;
+        }
+
+        // Show Complete Details for Own Record
+        function showOwnStudentDetails(student) {
+            const detailsHtml = `
+                <div class="result-box" style="background-color: #e8f5e9; border-left: 4px solid #2ecc71;">
+                    <h3>My Student Complete Details</h3>
+                    <p><b>Student ID:</b> ${student.student_id || 'N/A'}</p>
+                    <p><b>Full Name:</b> ${student.name || 'N/A'}</p>
+                    <p><b>Program:</b> ${student.program || 'N/A'}</p>
+                    <p><b>Year Level:</b> ${student.year || 'N/A'}</p>
+                    <p><b>Section:</b> ${student.section || 'N/A'}</p>
+                </div>
+            `;
+            document.getElementById('ownStudentDetails').innerHTML = detailsHtml;
         }
 
         // CREATE or UPDATE Student (POST or PUT)
@@ -363,7 +407,6 @@
 
             const targetApi = classmateUrl.endsWith('/api/students') ? classmateUrl : classmateUrl.replace(/\/$/, '') + '/api/students';
 
-            // Dito dadaan sa proxy para hindi ma-block ng CORS
             fetch('/proxy-classmate?url=' + encodeURIComponent(targetApi))
                 .then(response => {
                     if (!response.ok) {
@@ -387,7 +430,6 @@
                         });
                     }
                     output += '</div>';
-                    // Container para sa complete details ng napiling remote record
                     output += '<div id="remoteStudentDetails" style="margin-top: 10px;"></div>';
                     
                     document.getElementById('classmateResult').innerHTML = output;
@@ -399,7 +441,7 @@
                 });
         }
 
-        // Function para ipakita ang complete details ng napiling remote/classmate record
+        // Function para ipakita ang complete details ng napiling remote record
         function showRemoteStudentDetails(student) {
             const detailsHtml = `
                 <div class="result-box" style="background-color: #fff8e1; border-left: 4px solid #f39c12;">
