@@ -1,196 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Student API Interface - Lab 9 Integration</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333333;
-            max-width: 750px;
-            margin: 40px auto;
-            padding: 20px;
-        }
+<script>
+        // Global variable para ligtas na ma-access ang partner records nang walang quote/syntax errors
+        window.partnerStudentsCache = [];
 
-        .card {
-            background: #ffffff;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        h2 {
-            color: #34495e;
-            font-size: 1.2rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-success { background-color: #2ecc71; }
-        .btn-success:hover { background-color: #27ae60; }
-        .btn-warning { background-color: #f39c12; color: white; }
-        .btn-warning:hover { background-color: #d68910; }
-        .btn-danger { background-color: #e74c3c; }
-        .btn-danger:hover { background-color: #c0392b; }
-        .btn-secondary { background-color: #95a5a6; }
-        .btn-secondary:hover { background-color: #7f8c8d; }
-
-        input {
-            padding: 9px 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .inline-group input {
-            width: 60%;
-            margin-right: 8px;
-            margin-bottom: 0;
-            display: inline-block;
-        }
-
-        .result-box {
-            margin-top: 15px;
-            padding: 12px;
-            background-color: #f9f9f9;
-            border-left: 4px solid #3498db;
-            border-radius: 4px;
-        }
-
-        .student-item {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .badge {
-            background-color: #e0e0e0;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-        .badge-local { background-color: #d1e7dd; color: #0f5132; }
-        .badge-import { background-color: #cfe2ff; color: #084298; }
-        .badge-external { background-color: #f8d7da; color: #842029; }
-    </style>
-</head>
-<body>
-    <h1>System Integration Dashboard (Lab 9)</h1>
-
-    <!-- Student Information Section -->
-    <div class="card">
-        <h2>Student Information</h2>
-        <button onclick="loadStudent()">Load Student Information</button>
-        <div id="result"></div>
-    </div>
-
-    <!-- Greeting API Section -->
-    <div class="card">
-        <h2>Greeting API</h2>
-        <div class="inline-group">
-            <input type="text" id="nameInput" placeholder="Enter your first name">
-            <button onclick="sayHello()">Say Hello</button>
-        </div>
-        <p id="greeting" style="font-weight: bold; margin-top: 12px; color: #2c3e50;"></p>
-    </div>
-
-    <!-- Course Information Section -->
-    <div class="card">
-        <h2>Course Information</h2>
-        <button onclick="loadCourses()">Load Course Information</button>
-        <div id="coursesResult"></div>
-    </div>
-
-    <!-- CRUD Form Section (Step 4: Add / Edit) -->
-    <div class="card">
-        <h2 id="formTitle">Add New Student</h2>
-        <form id="studentForm" onsubmit="saveStudent(event)">
-            <input type="hidden" id="studentDbId">
-            <label style="font-size: 0.85rem; color: #666;">Student ID</label>
-            <input type="text" id="crudStudentId" placeholder="e.g. 24-00094" required>
-            
-            <label style="font-size: 0.85rem; color: #666;">Name</label>
-            <input type="text" id="crudName" placeholder="Full Name" required>
-            
-            <label style="font-size: 0.85rem; color: #666;">Program</label>
-            <input type="text" id="crudProgram" placeholder="Program (e.g. BSIT)" required>
-            
-            <label style="font-size: 0.85rem; color: #666;">Year</label>
-            <input type="number" id="crudYear" placeholder="Year" required>
-            
-            <label style="font-size: 0.85rem; color: #666;">Section</label>
-            <input type="text" id="crudSection" placeholder="Section (e.g. B)" required>
-            
-            <div style="margin-top: 5px;">
-                <button type="submit" class="btn-success" id="saveBtn">Add Student</button>
-                <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Database Students Section (My Records with Search & Source Badges) -->
-    <div class="card">
-        <h2>My Records (Database)</h2>
-        <div class="inline-group" style="margin-bottom: 10px;">
-            <input type="text" id="searchInput" placeholder="Search by name or ID...">
-            <button onclick="searchStudents()" class="btn-secondary">Search</button>
-        </div>
-        <button onclick="loadStudents()">Load All My Students</button>
-        <div id="studentList"></div>
-        <div id="ownStudentDetails" style="margin-top: 10px;"></div>
-    </div>
-
-    <!-- Additional Task: Filter Students by Section -->
-    <div class="card">
-        <h2>Filter Students by Section</h2>
-        <div class="inline-group">
-            <input type="text" id="sectionInput" placeholder="Enter section (e.g., A or B)">
-            <button onclick="loadStudentsBySection()">Filter</button>
-        </div>
-        <div id="sectionResult"></div>
-    </div>
-
-    <!-- Partner Records Section (Lab 9 Step 3 & 4: Retrieve & Save to My Database) -->
-    <div class="card">
-        <h2>Partner Records (Classmate API)</h2>
-        <button onclick="loadPartnerRecords()" class="btn-warning">Retrieve Partner Records</button>
-        <div id="partnerResult"></div>
-        <div id="partnerDetails" style="margin-top: 10px;"></div>
-    </div>
-
-    <script>
         function loadStudent() {
             fetch('/student')
                 .then(response => response.json())
@@ -415,7 +226,7 @@
                 });
         }
 
-        // Lab 9 Step 4: Load Partner Records via Flask /partner-records endpoint
+        // Lab 9 Step 4: Load Partner Records via Flask /partner-records endpoint (Safe Index-based)
         function loadPartnerRecords() {
             fetch('/partner-records')
                 .then(response => {
@@ -425,18 +236,19 @@
                     return response.json();
                 })
                 .then(data => {
+                    window.partnerStudentsCache = data; // Save sa global cache
                     let output = '<div class="result-box" style="border-left-color: #f39c12;">';
                     if (!Array.isArray(data) || data.length === 0) {
                         output += '<p>No records found from partner API.</p>';
                     } else {
                         output += '<p><b>Partner Students (Select to View or Save):</b></p>';
-                        data.forEach(student => {
+                        data.forEach((student, index) => {
                             output += `
                                 <div class="student-item" style="margin-bottom: 8px;">
                                     <span><b>${student.student_id || ''}</b> - ${student.name || ''}</span>
                                     <div>
-                                        <button class="btn-secondary" onclick='showPartnerStudentDetails(${JSON.stringify(student)})'>View</button>
-                                        <button class="btn-warning" onclick='savePartnerRecord(${JSON.stringify(student)})'>Save to My Database</button>
+                                        <button class="btn-secondary" onclick="showPartnerStudentDetails(${index})">View</button>
+                                        <button class="btn-warning" onclick="savePartnerRecord(${index})">Save to My Database</button>
                                     </div>
                                 </div>
                             `;
@@ -452,8 +264,10 @@
                 });
         }
 
-        // Show Partner Student Details before saving
-        function showPartnerStudentDetails(student) {
+        // Show Partner Student Details using cache index
+        function showPartnerStudentDetails(index) {
+            const student = window.partnerStudentsCache[index];
+            if (!student) return;
             const detailsHtml = `
                 <div class="result-box" style="background-color: #fff8e1; border-left: 4px solid #f39c12;">
                     <h3>Partner Record Details (Before Saving)</h3>
@@ -467,8 +281,11 @@
             document.getElementById('partnerDetails').innerHTML = detailsHtml;
         }
 
-        // Lab 9 Step 6: Save Partner Record to My Database via POST /import-student
-        function savePartnerRecord(student) {
+        // Lab 9 Step 6: Save Partner Record to My Database using cache index
+        function savePartnerRecord(index) {
+            const student = window.partnerStudentsCache[index];
+            if (!student) return;
+
             fetch('/import-student', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -485,5 +302,3 @@
             });
         }
     </script>
-</body>
-</html>
