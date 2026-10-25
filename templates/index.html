@@ -353,7 +353,7 @@
                 });
         }
 
-        // Load Classmate's Records (Step 8)
+        // Load Classmate's Records (Using /api/students endpoint)
         function loadClassmateStudents() {
             const classmateUrl = document.getElementById('classmateApiInput').value.trim();
             if (!classmateUrl) {
@@ -361,7 +361,7 @@
                 return;
             }
 
-            const targetApi = classmateUrl.endsWith('/api/students') ? classmateUrl : classmateUrl + '/api/students';
+            const targetApi = classmateUrl.endsWith('/api/students') ? classmateUrl : classmateUrl.replace(/\/$/, '') + '/api/students';
 
             fetch(targetApi)
                 .then(response => response.json())
