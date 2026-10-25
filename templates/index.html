@@ -183,9 +183,11 @@
         <div id="sectionResult"></div>
     </div>
 
-    <!-- 3. Partner Records Section -->
+    <!-- 3. Partner Records Section with Dynamic URL Input -->
     <div class="card">
         <h2>Partner Records</h2>
+        <label style="font-size: 0.85rem; color: #666;">Partner API Data Source URL</label>
+        <input type="text" id="partnerUrlInput" value="https://act-8-miranda-2.onrender.com/api/students" placeholder="Enter partner API URL">
         <button onclick="loadPartnerRecords()" class="btn-warning">Retrieve Partner Records</button>
         <div id="partnerResult" style="margin-top: 10px;"></div>
         <div id="partnerDetails" style="margin-top: 10px;"></div>
@@ -297,9 +299,10 @@
                 .catch(err => console.error(err));
         }
 
-        // Load Partner Records
+        // Load Partner Records with Dynamic Source URL
         function loadPartnerRecords() {
-            fetch('/partner-records')
+            const partnerUrl = document.getElementById('partnerUrlInput').value.trim();
+            fetch('/partner-records?url=' + encodeURIComponent(partnerUrl))
                 .then(res => {
                     if (!res.ok) throw new Error('Network response was not ok');
                     return res.json();
@@ -329,7 +332,7 @@
                 .catch(error => {
                     console.error(error);
                     document.getElementById('partnerResult').innerHTML =
-                        '<p style="color: red;">Unable to retrieve partner records.</p>';
+                        '<p style="color: red;">Unable to retrieve partner records from this source.</p>';
                 });
         }
 

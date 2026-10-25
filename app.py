@@ -58,13 +58,13 @@ def say_hello():
 @app.route("/courses", methods=["GET"])
 def get_courses():
   return jsonify({
-      "code": "IT 112",
-      "name": "Information Technology Integration and Architecture",
+      "code": "IT 3120",
+      "name": "System Integration",
       "units": 3,
   })
 
 
-# GET all students or POST a new student (Local, External, or Partner)
+# GET all students or POST a new student
 @app.route("/api/students", methods=["GET", "POST"])
 def handle_students():
   conn = get_db_connection()
@@ -163,10 +163,12 @@ def get_students_by_section(section_name):
   return jsonify(students)
 
 
-# Retrieve Partner Records from Missy's Live API
+# Retrieve Partner Records dynamically via query param URL
 @app.route("/partner-records", methods=["GET"])
 def get_partner_records():
-  partner_url = "https://act-8-miranda-2.onrender.com/api/students"
+  partner_url = request.args.get(
+      "url", "https://act-8-miranda-2.onrender.com/api/students"
+  )
   try:
     response = requests.get(partner_url, timeout=10)
     if response.status_code == 200:
