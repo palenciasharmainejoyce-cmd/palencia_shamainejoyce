@@ -165,7 +165,7 @@
         <div id="sectionResult"></div>
     </div>
 
-    <!-- Classmate's Records Section (Step 8) -->
+    <!-- Classmate's Records Section (Step 8 & Additional Task) -->
     <div class="card">
         <h2>Classmate's Records</h2>
         <div class="inline-group">
@@ -353,7 +353,7 @@
                 });
         }
 
-        // Load Classmate's Records (Using Python Proxy to Bypass CORS)
+        // Load Classmate's Records with View Details (Using Python Proxy to Bypass CORS)
         function loadClassmateStudents() {
             const classmateUrl = document.getElementById('classmateApiInput').value.trim();
             if (!classmateUrl) {
@@ -376,11 +376,20 @@
                     if (!Array.isArray(data) || data.length === 0) {
                         output += '<p>No records found from classmate API.</p>';
                     } else {
+                        output += '<p><b>Select a student to view complete details:</b></p>';
                         data.forEach(student => {
-                            output += '<p><b>' + (student.student_id || '') + '</b> - ' + (student.name || '') + ' | ' + (student.program || '') + ' | Year ' + (student.year || '') + ' | Section ' + (student.section || '') + '</p>';
+                            output += `
+                                <div class="student-item" style="margin-bottom: 8px;">
+                                    <span><b>${student.student_id || ''}</b> - ${student.name || ''}</span>
+                                    <button class="btn-warning" onclick='showRemoteStudentDetails(${JSON.stringify(student)})'>View Details</button>
+                                </div>
+                            `;
                         });
                     }
                     output += '</div>';
+                    // Container para sa complete details ng napiling remote record
+                    output += '<div id="remoteStudentDetails" style="margin-top: 10px;"></div>';
+                    
                     document.getElementById('classmateResult').innerHTML = output;
                 })
                 .catch(error => {
@@ -388,6 +397,21 @@
                     document.getElementById('classmateResult').innerHTML =
                         '<p style="color: red;">Unable to retrieve classmate records. Check URL or CORS/Render status.</p>';
                 });
+        }
+
+        // Function para ipakita ang complete details ng napiling remote/classmate record
+        function showRemoteStudentDetails(student) {
+            const detailsHtml = `
+                <div class="result-box" style="background-color: #fff8e1; border-left: 4px solid #f39c12;">
+                    <h3>Remote Student Complete Details</h3>
+                    <p><b>Student ID:</b> ${student.student_id || 'N/A'}</p>
+                    <p><b>Full Name:</b> ${student.name || 'N/A'}</p>
+                    <p><b>Program:</b> ${student.program || 'N/A'}</p>
+                    <p><b>Year Level:</b> ${student.year || 'N/A'}</p>
+                    <p><b>Section:</b> ${student.section || 'N/A'}</p>
+                </div>
+            `;
+            document.getElementById('remoteStudentDetails').innerHTML = detailsHtml;
         }
     </script>
 </body>
