@@ -1,7 +1,7 @@
 import requests
 
 # Missy's Render API URL
-partner_url = "https://act-8-miranda-2.onrender.com/api/students"
+partner_url = "https://act9-olesco.onrender.com/api/students"
 
 record = {
     "student_id": "EXT-001",
